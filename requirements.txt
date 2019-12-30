@@ -1,2 +1,3 @@
 pyYAML
 logbook
+gpiozero

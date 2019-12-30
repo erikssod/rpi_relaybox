@@ -1,3 +1,8 @@
+relay_ctl_pin:
+    beds1n2: 22
+    beds3n4: 23
+    spikes: 24
+
 debug:
     loglevel: DEBUG
 
