@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import yaml, sys, logbook, gpiozero
+import yaml, sys, logbook, gpiozero, time
 
 class Actuate:
     def __init__(self):
@@ -28,8 +28,18 @@ class Actuate:
         self.pair2 = gpiozero.LED(self.cfg['relay_ctl_pin']['beds3n4'])
         self.spikes = gpiozero.LED(self.cfg['relay_ctl_pin']['spikes'])
 
+    def test(self):
+        self.pair1.on()
+        self.pair2.on()
+        self.spikes.on()
+        time.sleep(15)
+        self.pair1.off()
+        self.pair2.off()
+        self.spikes.off()
+
 if __name__ == '__main__':
     a = Actuate()
     a.check()
+    a.test()
 
 
