@@ -3,6 +3,10 @@ relay_ctl_pin:
     beds3n4: 23
     spikes: 24
 
+default:
+    unit: ureg.second
+    time: 5
+
 debug:
     loglevel: DEBUG
 

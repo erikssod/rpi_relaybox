@@ -26,4 +26,4 @@ def water():
     return flask.redirect('/')
 
 if __name__ == '__main__':
-    app.run('192.168.1.7','5000',debug=True)
+    app.run('10.1.1.105','5000',debug=True)
