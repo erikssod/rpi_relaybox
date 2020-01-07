@@ -36,6 +36,9 @@ class Actuate:
         self.log.debug(self.cfg)
         self.log.debug(self.TimeOpen)
 
+    def test2(self, n):
+        self.log.debug(f'Passed from flask app: {n}')
+
     def test(self):
         self.pair1.on()
         self.pair2.on()

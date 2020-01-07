@@ -14,10 +14,24 @@ act = Actuate()
 @app.route('/')
 def index():
     now = test()
-    return flask.render_template('index.html', now=now)
+    return flask.render_template('index.html', 
+            now=now,
+            foo='foo',
+            bar='bar',
+            lst=[1,2,3,4,5,6])
 
 @app.route('/update', methods=['POST'])
 def update():
+    return flask.redirect('/')
+
+@app.route('/do_thing', methods=['POST'])
+def do_thing():
+    data = flask.request.form
+    print(dir(data))
+    a = data.to_dict()
+    print(a['thing'])
+    b = a['thing']
+    act.test2(b)
     return flask.redirect('/')
 
 @app.route('/water', methods=['POST'])
