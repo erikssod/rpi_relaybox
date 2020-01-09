@@ -1,6 +1,0 @@
-pyYAML
-logbook
-gpiozero
-flask
-flask_bootstrap
-pint
