@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
-import time
-import board
-import busio
+import time, board, busio, csv
 import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 
@@ -14,15 +12,19 @@ ads = ADS.ADS1115(i2c)
 
 # Create single-ended input on channel 0
 chan0 = AnalogIn(ads, ADS.P0)
-chan1 = AnalogIn(ads, ADS.P1)
-chan2 = AnalogIn(ads, ADS.P2)
-chan3 = AnalogIn(ads, ADS.P3)
+
+fieldnames = ['timestamp','val']
+
+with open('data.csv', 'w') as csv_file:
+    csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+    csv_writer.writeheader()
 
 while True:
-    a = ("0 {:>5}\t{:>5.3f}".format(chan0.value, chan0.voltage))
-    b = ("1 {:>5}\t{:>5.3f}".format(chan1.value, chan1.voltage))
-    c = ("2 {:>5}\t{:>5.3f}".format(chan2.value, chan2.voltage))
-    d = ("3 {:>5}\t{:>5.3f}".format(chan3.value, chan3.voltage))
-    print(a+'\t'+b+'\t'+c+'\t'+d)
-    time.sleep(1)
+    with open('data.csv','a') as csv_file:
+        csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
 
+        payload = {'timestamp':time.ctime(),
+                   'val':chan0.value}
+
+        csv_writer.writerow(payload)
+        time.sleep(1)
