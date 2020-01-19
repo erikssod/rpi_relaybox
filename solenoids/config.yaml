@@ -1,11 +1,14 @@
-relay_ctl_pin:
-    beds1n2: 22
-    beds3n4: 23
-    spikes: 24
+solenoid:
+    beds1n2: 
+        pin: 22
+    beds3n4: 
+        pin: 23
+    spikes:  
+        pin: 24
 
 default:
     unit: ureg.second
-    time: 5
+    max:  16
 
 debug:
     loglevel: DEBUG

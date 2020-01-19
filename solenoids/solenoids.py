@@ -19,55 +19,33 @@ class Actuate:
         self.log.level = eval('logbook.'+self.cfg['debug']['loglevel'])
         self.setup()
 
+    def interact(self):
+        import code
+        code.interact(local=locals())
+        sys.exit(0)
 
     def setup(self):
-        self.pair1 = gpiozero.LED(self.cfg['relay_ctl_pin']['beds1n2'])
-        self.pair2 = gpiozero.LED(self.cfg['relay_ctl_pin']['beds3n4'])
-        self.spikes = gpiozero.LED(self.cfg['relay_ctl_pin']['spikes'])
+        self.channel = self.cfg['solenoid']
+        for key in self.channel:
+            self.channel[key]['switch'] = gpiozero.LED(self.channel[key]['pin'])
+        self.time_max = self.to_seconds(self.cfg['default']['max'])
 
-    def time_open(self):
+    def to_seconds(self, val):
         ureg = pint.UnitRegistry()
-        t = self.cfg['default']['time']
-        u = eval(self.cfg['default']['unit'])
-        tmp = t * u
-        self.TimeOpen = tmp.to(ureg.second)
+        unit = eval(self.cfg['default']['unit'])
+        seconds = unit *val 
+        return seconds.to(ureg.second)
 
     def check(self):
         self.log.debug(self.cfg)
-        self.log.debug(self.TimeOpen)
-
-    def test2(self, n):
-        self.log.debug(f'Passed from flask app: {n}')
-
-    def test(self):
-        self.pair1.on()
-        self.pair2.on()
-        self.spikes.on()
-        self.log.info(self.pair1.is_active)
-        self.log.info(self.pair2.is_active)
-        self.log.info(self.spikes.is_active)
-        time.sleep(15)
-        self.pair1.off()
-        self.pair2.off()
-        self.spikes.off()
-        self.log.info(self.pair1.is_active)
-        self.log.info(self.pair2.is_active)
-        self.log.info(self.spikes.is_active)
-
-    def all_off(self):
-        self.pair1.off()
-        self.pair2.off()
-        self.spikes.off()
-        self.log.info(self.pair1.is_active)
-        self.log.info(self.pair2.is_active)
-        self.log.info(self.spikes.is_active)
-
+        self.log.debug(self.time_max)
+        for key in self.channel:
+            state = self.channel[key]['switch'].is_active
+            self.log.info(f'{key} is active: {state}')
+        self.interact()
 
 if __name__ == '__main__':
     a = Actuate()
-    a.time_open()
     a.check()
-#   a.test()
-    a.all_off()
 
 
