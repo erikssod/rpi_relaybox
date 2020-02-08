@@ -1,50 +1,73 @@
 #!/usr/bin/env python3
 
-import time, board, busio, csv
+import time, board, busio, sys
 import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
-import pint
+import pint, yaml, logbook, requests
 
-# Create the I2C bus
-i2c = busio.I2C(board.SCL, board.SDA)
+class PressureMon:
+    def __init__(self):
+        logbook.StreamHandler(sys.stdout).push_application()
+        self.log = logbook.Logger(self.__class__.__name__)
+        logbook.set_datetime_format("local")
+        self.log.info('Logbook started')
 
-# Create the ADC object using the I2C bus
-ads = ADS.ADS1115(i2c)
+        self.ureg = pint.UnitRegistry()
 
-# Create single-ended input on channel 0
-chan0 = AnalogIn(ads, ADS.P0)
+        try:
+            with open('config.yaml', 'r') as stream:
+                self.cfg = yaml.load(stream, Loader=yaml.FullLoader)
+        except FileNotFoundError:
+            self.log.critical('Config file not found')
+            sys.exit()
 
-fieldnames = ['timestamp', 'voltage', 'pressure']
+        self.log.level = eval('logbook.'+self.cfg['debug']['loglevel'])
 
-ureg = pint.UnitRegistry()
+    def interact(self):
+        import code
+        code.interact(local=locals())
+        sys.exit(0)
 
-with open('data.csv', 'w') as csv_file:
-    csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-    csv_writer.writeheader()
-
-def to_V(val):
-    volts = val * ureg.volt
-    return volts.to_compact()
-
-def to_Pa(V):
-    offset = 0.504140385
-    factor = 1.6/4.5 * 10**6
-    magnitude = (V - offset) * factor
-    pressure = magnitude * ureg.pascal
-    return pressure.to_compact()
-
-while True:
-    with open('data.csv','a') as csv_file:
-        csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-        V = chan0.voltage
+    def setup(self):
+        # Create the I2C bus
+        i2c = busio.I2C(board.SCL, board.SDA)
         
-        payload = {'timestamp':time.ctime(),
-                   'voltage':to_V(V),
-                   'pressure':to_Pa(V),
-                   }
+        # Create the ADC object using the I2C bus
+        ads = ADS.ADS1115(i2c)
+        
+        # Create single-ended input on channel 0
+        self.chan0 = AnalogIn(ads, ADS.P0)
+    
+    def to_V(self,val):
+        volts = val * self.ureg.volt
+        return volts.to_compact()
+    
+    def to_Pa(self,V):
+        ps = self.cfg['pressure_sensor']
+        offset = ps['offset']
+        factor = ps['min']/ps['max'] * 10**6
+        magnitude = (V - offset) * factor
+        pressure = magnitude * self.ureg.pascal
+        return pressure.to_compact()
+    
+    def _dummy(self):
+        V = self.chan0.voltage
+            
+        self.payload = {'timestamp':time.ctime(),
+                        'voltage':self.to_V(V),
+                        'pressure':self.to_Pa(V),
+                        }
+        print(self.payload)
+    
+    def post(self):
+        url = self.cfg['slack']['webhookURL']
+        r = requests.post(url, json={'text':str(self.payload)})
+        self.log.info(f'Slack post: {r.content}')
+        self.interact()
 
-        csv_writer.writerow(payload)
-        print(payload)
-        time.sleep(1)
-
+if __name__ == '__main__':
+    p = PressureMon()
+    p.setup()
+    p._dummy()
+    p.post()
 

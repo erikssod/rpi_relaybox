@@ -1,8 +1,0 @@
-slack:
-        webhookURL: https://hooks.slack.com/services/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
-
-pressure_sensor:
-        offset: 0.504140385
-        min_read: 1.6
-        max_read: 4.5
-
