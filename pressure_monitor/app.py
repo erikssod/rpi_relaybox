@@ -21,7 +21,16 @@ class PressureMon:
             self.log.critical('Config file not found')
             sys.exit()
 
+        try:
+            f = self.cfg['slack']['webhookfile']
+            with open(f, 'r') as stream:
+                self.slackURL = yaml.load(stream, Loader=yaml.FullLoader)
+        except FileNotFoundError:
+            self.log.critical('Config file not found')
+            sys.exit()
+
         self.log.level = eval('logbook.'+self.cfg['debug']['loglevel'])
+        #self.interact()
 
     def interact(self):
         import code
@@ -60,10 +69,9 @@ class PressureMon:
         print(self.payload)
     
     def post(self):
-        url = self.cfg['slack']['webhookURL']
-        r = requests.post(url, json={'text':str(self.payload)})
+        r = requests.post(self.slackURL,
+                json={'text':str(self.payload)})
         self.log.info(f'Slack post: {r.content}')
-        self.interact()
 
 if __name__ == '__main__':
     p = PressureMon()

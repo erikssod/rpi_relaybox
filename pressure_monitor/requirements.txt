@@ -1,3 +1,5 @@
 adafruit-circuitpython-ads1x15
 Logbook
 pint
+yaml
+requests
