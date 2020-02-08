@@ -130,3 +130,7 @@ dmypy.json
 
 # vim
 *.swp
+
+# Secrets
+*.secret
+
