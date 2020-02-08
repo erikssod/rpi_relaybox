@@ -14,7 +14,7 @@ ads = ADS.ADS1115(i2c)
 # Create single-ended input on channel 0
 chan0 = AnalogIn(ads, ADS.P0)
 
-fieldnames = ['timestamp','val', 'voltage', 'pressure']
+fieldnames = ['timestamp', 'voltage', 'pressure']
 
 ureg = pint.UnitRegistry()
 
@@ -27,7 +27,7 @@ def to_V(val):
     return volts.to_compact()
 
 def to_Pa(V):
-    offset = 0.5
+    offset = 0.504140385
     factor = 1.6/4.5 * 10**6
     magnitude = (V - offset) * factor
     pressure = magnitude * ureg.pascal
@@ -36,11 +36,11 @@ def to_Pa(V):
 while True:
     with open('data.csv','a') as csv_file:
         csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-
+        V = chan0.voltage
+        
         payload = {'timestamp':time.ctime(),
-                   'val':chan0.value,
-                   'voltage':to_V(chan0.voltage),
-                   'pressure':to_Pa(chan0.voltage),
+                   'voltage':to_V(V),
+                   'pressure':to_Pa(V),
                    }
 
         csv_writer.writerow(payload)
