@@ -45,7 +45,9 @@ class PressureMon:
         ads = ADS.ADS1115(i2c)
         
         # Create single-ended input on channel 0
-        self.chan0 = AnalogIn(ads, ADS.P0)
+        self._chan0 = AnalogIn(ads, ADS.P0)
+
+        self._V = self._chan0.voltage
     
     def to_V(self,val):
         volts = val * self.ureg.volt
@@ -58,15 +60,24 @@ class PressureMon:
         magnitude = (V - offset) * factor
         pressure = magnitude * self.ureg.pascal
         return pressure.to_compact()
+
+    def to_seconds(self,val):
+        ureg = self.ureg
+        unit = eval(self.cfg['monitor']['unit'])
+        seconds = unit *val 
+        return seconds.to(ureg.second)
     
+    def monitor(self):
+        threshold = self.cfg['monitor']['threshold']
+
     def _dummy(self):
-        V = self.chan0.voltage
-            
+        datapt = self._V
+
         self.payload = {'timestamp':time.ctime(),
-                        'voltage':self.to_V(V),
-                        'pressure':self.to_Pa(V),
+                        'voltage':self.to_V(datapt),
+                        'pressure':self.to_Pa(datapt),
                         }
-        print(self.payload)
+        self.log.debug(self.payload)
     
     def post(self):
         r = requests.post(self.slackURL,
@@ -76,6 +87,7 @@ class PressureMon:
 if __name__ == '__main__':
     p = PressureMon()
     p.setup()
-    p._dummy()
-    p.post()
+    print(p.to_seconds(5))
+    #p._dummy()
+    #p.post()
 

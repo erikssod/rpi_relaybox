@@ -6,5 +6,10 @@ pressure_sensor:
     min: 1.6
     max: 4.5
 
+monitor:
+    threshold: 2
+    frequency: 10
+    unit: ureg.second
+
 debug:
     loglevel: DEBUG
