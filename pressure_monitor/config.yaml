@@ -10,6 +10,7 @@ monitor:
     threshold: 2
     frequency: 10
     unit: ureg.second
+    window: 5
 
 debug:
     loglevel: DEBUG

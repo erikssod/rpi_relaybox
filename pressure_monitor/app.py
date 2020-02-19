@@ -4,6 +4,7 @@ import time, board, busio, sys
 import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 import pint, yaml, logbook, requests
+import numpy as np
 
 class PressureMon:
     def __init__(self):
@@ -30,7 +31,6 @@ class PressureMon:
             sys.exit()
 
         self.log.level = eval('logbook.'+self.cfg['debug']['loglevel'])
-        #self.interact()
 
     def interact(self):
         import code
@@ -38,16 +38,10 @@ class PressureMon:
         sys.exit(0)
 
     def setup(self):
-        # Create the I2C bus
         i2c = busio.I2C(board.SCL, board.SDA)
-        
-        # Create the ADC object using the I2C bus
         ads = ADS.ADS1115(i2c)
-        
-        # Create single-ended input on channel 0
         self._chan0 = AnalogIn(ads, ADS.P0)
-
-        self._V = self._chan0.voltage
+        self.data = list(np.arange(0,self.cfg['monitor']['window']))
     
     def to_V(self,val):
         volts = val * self.ureg.volt
@@ -67,6 +61,19 @@ class PressureMon:
         seconds = unit *val 
         return seconds.to(ureg.second)
     
+    def get_reading(self):
+        self.data.pop(0)
+        datapt = self.to_V(self._chan0.voltage)
+        self.data.extend([datapt.magnitude])
+    
+    def _dummy2(self):
+        while True:
+            self.get_reading()
+            mean = np.mean(self.data)
+            std = np.std(self.data)
+            self.log.info(f'Mean:{mean:.2f}, std:{std:.2f}')
+            time.sleep(1)
+
     def monitor(self):
         threshold = self.cfg['monitor']['threshold']
 
@@ -87,7 +94,6 @@ class PressureMon:
 if __name__ == '__main__':
     p = PressureMon()
     p.setup()
-    print(p.to_seconds(5))
-    #p._dummy()
+    p._dummy2()
     #p.post()
 
