@@ -63,15 +63,16 @@ class PressureMon:
     
     def get_reading(self):
         self.data.pop(0)
-        datapt = self.to_V(self._chan0.voltage)
-        self.data.extend([datapt.magnitude])
+        self.datapt = self.to_V(self._chan0.voltage)
+        self.data.extend([self.datapt.magnitude])
     
     def _dummy2(self):
         while True:
             self.get_reading()
             mean = np.mean(self.data)
             std = np.std(self.data)
-            self.log.info(f'Mean:{mean:.2f}, std:{std:.2f}')
+            norm = self.datapt.magnitude / mean
+            self.log.info(f'Mean:{mean:.2f}, std:{std:.2f}, norm:{norm:.2f}')
             time.sleep(1)
 
     def monitor(self):
