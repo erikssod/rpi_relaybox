@@ -41,8 +41,12 @@ class PressureMon:
         i2c = busio.I2C(board.SCL, board.SDA)
         ads = ADS.ADS1115(i2c)
         self._chan0 = AnalogIn(ads, ADS.P0)
-        self.data = list(np.arange(0,self.cfg['monitor']['window']))
-    
+        window = self.cfg['monitor']['window']
+        self.data = list(np.arange(0,window))
+        self.freq = self.cfg['monitor']['frequency']
+        self.lo = self.cfg['monitor']['lo']
+        self.hi = self.cfg['monitor']['hi']
+
     def to_V(self,val):
         volts = val * self.ureg.volt
         return volts.to_compact()
@@ -58,7 +62,7 @@ class PressureMon:
     def to_seconds(self,val):
         ureg = self.ureg
         unit = eval(self.cfg['monitor']['unit'])
-        seconds = unit *val 
+        seconds = unit * val 
         return seconds.to(ureg.second)
     
     def get_reading(self):
@@ -66,24 +70,24 @@ class PressureMon:
         self.datapt = self.to_V(self._chan0.voltage)
         self.data.extend([self.datapt.magnitude])
     
-    def _dummy2(self):
+    def monitor(self):
         while True:
             self.get_reading()
             mean = np.mean(self.data)
             std = np.std(self.data)
             norm = self.datapt.magnitude / mean
             self.log.info(f'Mean:{mean:.2f}, std:{std:.2f}, norm:{norm:.2f}')
-            time.sleep(1)
+            if norm < self.lo or norm > self.hi:
+                self.report()
+                self.post()
+            time.sleep(self.to_seconds(self.freq).magnitude)
 
-    def monitor(self):
-        threshold = self.cfg['monitor']['threshold']
-
-    def _dummy(self):
-        datapt = self._V
+    def report(self):
+        V = self.datapt
 
         self.payload = {'timestamp':time.ctime(),
-                        'voltage':self.to_V(datapt),
-                        'pressure':self.to_Pa(datapt),
+                        'voltage':V,
+                        'pressure':self.to_Pa(V.magnitude),
                         }
         self.log.debug(self.payload)
     
@@ -95,6 +99,6 @@ class PressureMon:
 if __name__ == '__main__':
     p = PressureMon()
     p.setup()
-    p._dummy2()
+    p.monitor()
     #p.post()
 
