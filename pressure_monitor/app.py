@@ -54,10 +54,10 @@ class PressureMon:
     def to_Pa(self,V):
         ps = self.cfg['pressure_sensor']
         offset = ps['offset']
-        factor = ps['min']/ps['max'] * 10**6
+        factor = ps['min']/ps['max']
         magnitude = (V - offset) * factor
         pressure = magnitude * self.ureg.pascal
-        return pressure.to_compact()
+        return pressure
 
     def to_seconds(self,val):
         ureg = self.ureg
@@ -75,25 +75,23 @@ class PressureMon:
             self.get_reading()
             mean = np.mean(self.data)
             std = np.std(self.data)
-            norm = self.datapt.magnitude / mean
-            self.log.info(f'Mean:{mean:.2f}, std:{std:.2f}, norm:{norm:.2f}')
-            if norm < self.lo or norm > self.hi:
+            self.norm = self.datapt.magnitude / mean
+            unit = self.datapt.u.format_babel()
+            self.log.info(f'Mean:{mean:.2f} {unit}, std:{std:.2f}, norm:{self.norm:.2f}')
+            if self.norm < self.lo or self.norm > self.hi:
                 self.report()
                 self.post()
             time.sleep(self.to_seconds(self.freq).magnitude)
 
     def report(self):
         V = self.datapt
+        Pa = self.to_Pa(V.magnitude)
 
-        self.payload = {'timestamp':time.ctime(),
-                        'voltage':V,
-                        'pressure':self.to_Pa(V.magnitude),
-                        }
+        self.payload = {'text':f'Normalised val: {self.norm:.2f}, Pressure: {Pa.magnitude:.2f} {Pa.u.format_babel()}'}
         self.log.debug(self.payload)
     
     def post(self):
-        r = requests.post(self.slackURL,
-                json={'text':str(self.payload)})
+        r = requests.post(self.slackURL,json=self.payload)
         self.log.info(f'Slack post: {r.content}')
 
 if __name__ == '__main__':
