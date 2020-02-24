@@ -65,6 +65,11 @@ class PressureMon:
         seconds = unit * val 
         return seconds.to(ureg.second)
     
+    def to_interval(self,val):
+        ureg = self.ureg
+        unit = eval(self.cfg['monitor']['unit'])
+        return  unit * val 
+    
     def get_reading(self):
         self.data.pop(0)
         self.datapt = self.to_V(self._chan0.voltage)
@@ -73,30 +78,36 @@ class PressureMon:
     def monitor(self):
         while True:
             self.get_reading()
-            mean = np.mean(self.data)
-            std = np.std(self.data)
-            self.norm = self.datapt.magnitude / mean
-            unit = self.datapt.u.format_babel()
-            self.log.info(f'Mean:{mean:.2f} {unit}, std:{std:.2f}, norm:{self.norm:.2f}')
-            if self.norm < self.lo or self.norm > self.hi:
-                self.report()
+            Pa = self.to_Pa(self.datapt.magnitude)
+            self.log.info(f'{Pa.magnitude:.2f} {Pa.u.format_babel()}')
+            self.norm = self.datapt.magnitude / np.mean(self.data)
+            if self.norm < self.lo: 
+                self.report('dump')
+                self.post()
+            if self.norm > self.hi:
+                self.report('spike')
                 self.post()
             time.sleep(self.to_seconds(self.freq).magnitude)
 
-    def report(self):
-        V = self.datapt
-        Pa = self.to_Pa(V.magnitude)
+    def make_pretty(self):
+        self.pretty_data = []
+        for i,_ in enumerate(self.data):
+            self.pretty_data.extend([self.to_Pa(self.data[i])])
+            tmp = self.pretty_data[i]
+            self.pretty_data[i] = f'{tmp.magnitude:.2f} {tmp.u.format_babel()}'
 
-        self.payload = {'text':f'Normalised val: {self.norm:.2f}, Pressure: {Pa.magnitude:.2f} {Pa.u.format_babel()}'}
+    def report(self, trigger):
+        self.make_pretty()
+        self.payload = {'text':f'Pressure {trigger}! \
+                \nLast readings every {self.to_interval(self.freq)} \
+                \n{self.pretty_data}'}
         self.log.debug(self.payload)
     
     def post(self):
         r = requests.post(self.slackURL,json=self.payload)
-        self.log.info(f'Slack post: {r.content}')
+        self.log.debug(f'Slack post: {r.content}')
 
 if __name__ == '__main__':
     p = PressureMon()
     p.setup()
     p.monitor()
-    #p.post()
-
