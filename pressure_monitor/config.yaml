@@ -10,7 +10,7 @@ monitor:
     lo: 0.5
     hi: 2.0
     frequency: 0.25
-    unit: ureg.minute
+    unit: minute
     window: 5
 
 debug:

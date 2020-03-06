@@ -61,13 +61,13 @@ class PressureMon:
 
     def to_seconds(self,val):
         ureg = self.ureg
-        unit = eval(self.cfg['monitor']['unit'])
+        unit = ureg.parse_expression(self.cfg['monitor']['unit'])
         seconds = unit * val 
         return seconds.to(ureg.second)
     
     def to_interval(self,val):
         ureg = self.ureg
-        unit = eval(self.cfg['monitor']['unit'])
+        unit = ureg.parse_expression(self.cfg['monitor']['unit'])
         return  unit * val 
     
     def get_reading(self):
@@ -83,10 +83,10 @@ class PressureMon:
             self.norm = self.datapt.magnitude / np.mean(self.data)
             if self.norm < self.lo: 
                 self.report('dump')
-                self.post()
+                #self.post()
             if self.norm > self.hi:
                 self.report('spike')
-                self.post()
+                #self.post()
             time.sleep(self.to_seconds(self.freq).magnitude)
 
     def make_pretty(self):
