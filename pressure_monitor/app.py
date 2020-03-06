@@ -83,10 +83,10 @@ class PressureMon:
             self.norm = self.datapt.magnitude / np.mean(self.data)
             if self.norm < self.lo: 
                 self.report('dump')
-                #self.post()
+                self.post()
             if self.norm > self.hi:
                 self.report('spike')
-                #self.post()
+                self.post()
             time.sleep(self.to_seconds(self.freq).magnitude)
 
     def make_pretty(self):
