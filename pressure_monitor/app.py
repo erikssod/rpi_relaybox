@@ -79,8 +79,9 @@ class PressureMon:
         while True:
             self.get_reading()
             Pa = self.to_Pa(self.datapt.magnitude)
-            self.log.info(f'{Pa.magnitude:.2f} {Pa.u.format_babel()}')
+            self.log.info('{0.magnitude:.2f} {0.units:~}'.format(Pa))
             self.norm = self.datapt.magnitude / np.mean(self.data)
+            self.log.debug(f'Norm: {self.norm:.2f}')
             if self.norm < self.lo: 
                 self.report('dump')
                 self.post()
@@ -89,18 +90,12 @@ class PressureMon:
                 self.post()
             time.sleep(self.to_seconds(self.freq).magnitude)
 
-    def make_pretty(self):
-        self.pretty_data = []
-        for i,_ in enumerate(self.data):
-            self.pretty_data.extend([self.to_Pa(self.data[i])])
-            tmp = self.pretty_data[i]
-            self.pretty_data[i] = f'{tmp.magnitude:.2f} {tmp.u.format_babel()}'
-
     def report(self, trigger):
-        self.make_pretty()
-        self.payload = {'text':f'Pressure {trigger}! \
-                \nLast readings every {self.to_interval(self.freq)} \
-                \n{self.pretty_data}'}
+        pretty = self.data * self.ureg.pascal
+        interv = self.to_interval(self.freq)
+        self.payload = {'text':f'Pressure {trigger}!' +\
+                '\nMost recent readings: {:.2f~}'.format(pretty) +\
+                f'\nTaken every {interv}'}
         self.log.debug(self.payload)
     
     def post(self):
