@@ -16,3 +16,5 @@
 ![alt text][WD]
 
 [WD]: https://github.com/erikssod/rpi_relaybox/blob/master/wiring_diagram/Diagram.svg "WD!"
+
+## Now, via VSCode!

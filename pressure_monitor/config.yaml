@@ -9,7 +9,7 @@ pressure_sensor:
 monitor:
     lo: 0.5
     hi: 2.0
-    frequency: 0.25
+    frequency: 1
     unit: minute
     window: 5
 
